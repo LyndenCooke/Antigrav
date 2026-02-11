@@ -1,13 +1,27 @@
 import { useEffect, useState } from "react";
 
-export const useLocalStorage = <T,>(key: string, initialValue: T) => {
+export const useLocalStorage = <T,>(
+  key: string,
+  initialValue: T,
+  validate?: (value: unknown) => value is T
+) => {
   const [value, setValue] = useState<T>(() => {
     if (typeof window === "undefined") {
       return initialValue;
     }
+
     try {
       const stored = window.localStorage.getItem(key);
-      return stored ? (JSON.parse(stored) as T) : initialValue;
+      if (!stored) {
+        return initialValue;
+      }
+
+      const parsed = JSON.parse(stored) as unknown;
+      if (validate && !validate(parsed)) {
+        return initialValue;
+      }
+
+      return parsed as T;
     } catch {
       return initialValue;
     }

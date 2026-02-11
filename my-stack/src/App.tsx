@@ -19,12 +19,36 @@ import { ColumnType, Tool } from "./types";
 
 const emptyState: Record<ColumnType, Tool[]> = { free: [], paid: [] };
 
+const isTool = (value: unknown): value is Tool => {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<Tool>;
+  return (
+    typeof candidate.id === "string" &&
+    typeof candidate.name === "string" &&
+    typeof candidate.domain === "string" &&
+    (candidate.column === "free" || candidate.column === "paid") &&
+    typeof candidate.cost === "number"
+  );
+};
+
+const isColumnState = (value: unknown): value is Record<ColumnType, Tool[]> => {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<Record<ColumnType, unknown>>;
+  return (
+    Array.isArray(candidate.free) &&
+    Array.isArray(candidate.paid) &&
+    candidate.free.every(isTool) &&
+    candidate.paid.every(isTool)
+  );
+};
+
 const logoUrl = (domain: string) => `https://logo.clearbit.com/${domain}`;
 
 const App = () => {
   const [columns, setColumns] = useLocalStorage<Record<ColumnType, Tool[]>>(
     "my-stack-tools",
-    emptyState
+    emptyState,
+    isColumnState
   );
   const [activeId, setActiveId] = useState<string | null>(null);
 
